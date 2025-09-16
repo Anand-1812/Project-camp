@@ -1,0 +1,21 @@
+{
+  "name": "project-camp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "modules",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Anand-1812/Project-camp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Anand-1812/Project-camp/issues"
+  },
+  "homepage": "https://github.com/Anand-1812/Project-camp#readme"
+}
