@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/Anand-1812/Project-camp/issues"
   },
-  "homepage": "https://github.com/Anand-1812/Project-camp#readme"
+  "homepage": "https://github.com/Anand-1812/Project-camp#readme",
+  "devDependencies": {
+    "prettier": "3.6.2"
+  }
 }
