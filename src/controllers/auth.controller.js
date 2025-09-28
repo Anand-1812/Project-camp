@@ -1,10 +1,11 @@
-import { User } from "../models/user.model.js"; // fixed path
+import { User } from "../models/user.model.js";
 import { ApiResponse } from "../utils/api_response.js";
 import { ApiError } from "../utils/api_error.js";
 import { asyncHandler } from "../utils/async_handler.js";
 import { sendEmail } from "../utils/mails.js";
-import { emailVerificationMailgenContent } from "../utils/mailgen_content.js"; // ensure this exists
+import { emailVerificationMailgenContent } from "../utils/mailgen_content.js";
 
+// Generate access and refresh tokens
 const generateAccessAndRefreshToken = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -20,6 +21,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 
     return { accessToken, refreshToken };
   } catch (error) {
+    console.error("JWT generation error:", error);
     throw new ApiError(
       500,
       "Something went wrong while generating access token",
@@ -53,8 +55,8 @@ export const registerUser = asyncHandler(async (req, res) => {
   const { unHashedToken, hashedToken, tokenExpiry } =
     user.generateTemporaryToken();
 
-  user.emailVerificaionToken = hashedToken;
-  user.emailVerificaionExpiry = tokenExpiry;
+  user.emailVerificationToken = hashedToken;
+  user.emailVerificationExpiry = tokenExpiry;
   await user.save({ validateBeforeSave: false });
 
   // send verification email
@@ -63,13 +65,13 @@ export const registerUser = asyncHandler(async (req, res) => {
     subject: "Please verify your email",
     mailgenContent: emailVerificationMailgenContent(
       user.username,
-      `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`, // fixed URL
+      `${req.protocol}://${req.get("host")}/api/v1/users/verify-email/${unHashedToken}`,
     ),
   });
 
   // fetch the created user without sensitive fields
   const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken -emailVerificaionToken -emailVerificaionExpiry",
+    "-password -refreshToken -emailVerificationToken -emailVerificationExpiry",
   );
 
   if (!createdUser) {
@@ -87,20 +89,23 @@ export const registerUser = asyncHandler(async (req, res) => {
     );
 });
 
-const login = asyncHandler(async (req, res) => {
+// Login user
+export const login = asyncHandler(async (req, res) => {
   const { email, password, username } = req.body;
 
-  if (!username || !email) {
+  if (!email && !username) {
     throw new ApiError(400, "Username or email is required");
   }
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({
+    $or: [{ email }, { username }],
+  });
 
   if (!user) {
-    throw new ApiError(400, "user does not exist");
+    throw new ApiError(400, "User does not exist");
   }
 
-  const isPasswordValid = User.isPasswordCorrect(password);
+  const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
     throw new ApiError(400, "Invalid credentials");
@@ -111,12 +116,12 @@ const login = asyncHandler(async (req, res) => {
   );
 
   const loggedInUser = await User.findById(user._id).select(
-    "-password -refreshToken -emailVerificaionToken -emailVerificaionExpiry",
+    "-password -refreshToken -emailVerificationToken -emailVerificationExpiry",
   );
 
   const options = {
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === "production", // only secure in prod
   };
 
   return res

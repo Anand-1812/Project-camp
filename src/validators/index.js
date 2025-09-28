@@ -13,12 +13,17 @@ export const userRegisterValidator = () => {
       .trim()
       .notEmpty()
       .withMessage("Username is required")
-      .isLowerCase()
-      .withMessage("Username must be in the lower case")
       .isLength("Username must be atleast 3 characters long"),
 
     body("passowrd").trim().notEmpty().withMessage("password is required"),
 
     body("fullname").optional().trim(),
+  ];
+};
+
+export const userLoginValidator = () => {
+  return [
+    body("email").optional().isEmail().withMessage("Email is invalid"),
+    body("password").notEmpty().withMessage("Password is required"),
   ];
 };
